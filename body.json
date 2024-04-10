@@ -1,0 +1,18 @@
+{
+    "modelUri": "gpt://b1g11e1687u5keine5fp/yandexgpt-lite",
+    "completionOptions": {
+        "stream": false,
+        "temperature": 0.5,
+        "maxTokens": "200"
+    },
+    "messages": [
+        {
+            "role": "system",
+            "text": "Тебе дают краткое описание человека, ты должен составить его биографию"
+        },
+        {
+            "role": "user",
+            "text": "денис 15 лет пошлый, учучь в мисис"
+        }
+    ]
+}
