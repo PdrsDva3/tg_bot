@@ -69,7 +69,7 @@ def gpt(text):
     with open('body.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     f.close()
-    data['messages'][1]['text'] = text
+    data['messages'][2]['text'] = text
     with open('body.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     f.close()
@@ -89,7 +89,7 @@ def gpt(text):
 # ------------------------
 
 
-# --------handlers-------
+# =============================  handlers  ====================================
 @dp.message_handler(commands='start')
 async def send_welcome(message: types.Message):
     await message.answer_sticker('CAACAgIAAxkBAAOsZhLm2J26S3mtglXYkcwgycjeg8oAAmowAAIDUjlLyDwdIQNK90c0BA')
@@ -108,27 +108,73 @@ async def gpt_usage(message: types.Message):
     await message.answer(generated_text)
 
 
-# @dp.message_handler(text='bio')
-# async def gimme_bio(message: types.Message):
-#
+# -----------bio
+@dp.callback_query_handler(lambda query: query.data == 'bio')
+async def callback_bio(callback_query: types.CallbackQuery):
+    await User_data.bio.set()
+    await bot.send_message(chat_id=callback_query.from_user.id, text='Введите ФИО')
 
 
-# ====================================callback handlers
-@dp.callback_query_handler()
-async def callback_query_keyboard(callback_query: types.CallbackQuery):
-    cq_data = callback_query.data
-    if cq_data == 'bio':
-        await bot.send_message(chat_id=callback_query.from_user.id, text=f'{cq_data}')
-    elif cq_data == 'telephone':
-        await bot.send_message(chat_id=callback_query.from_user.id, text=f'{cq_data}')
-    elif cq_data == 'email':
-        await bot.send_message(chat_id=callback_query.from_user.id, text=f'{cq_data}')
-    elif cq_data == 'biography':
-        await bot.send_message(chat_id=callback_query.from_user.id, text=f'{cq_data}')
+@dp.message_handler(state='bio')
+async def write_bio(message: types.Message, state: FSMContext):
+    async with state.proxy() as info:
+        info['bio'] = message.text
+    await state.finish()
 
 
-# -----------------------
+# --------------
+
+
+# ---------telephone
+@dp.callback_query_handler(lambda query: query.data == 'telephone')
+async def callback_telephone(call: types.CallbackQuery, state: FSMContext):
+    await User_data.telephone.set()
+    await bot.send_message(chat_id=call.from_user.id, text='Введите телефон')
+    async with state.proxy() as info:
+        info['telephone'] = call.data
+    await state.finish()
+
+
+# ------------------
+
+# ----------------email
+@dp.callback_query_handler(lambda query: query.data == 'email')
+async def callback_email(call: types.CallbackQuery, state: FSMContext):
+    await User_data.email.set()
+    await bot.send_message(chat_id=call.from_user.id, text='Введите почту')
+
+
+@dp.message_handler(state='email')
+async def write_email(message: types.Message, state: FSMContext):
+    async with state.proxy() as info:
+        info['email'] = message.text
+    await state.finish()
+
+
+# --------------------
+
+
+@dp.callback_query_handler(lambda query: query.data == 'epitaph')
+async def callback_epitath_bday(call: types.CallbackQuery, state: FSMContext):
+    await Epitaph.bday.set()
+    await bot.send_message(chat_id=call.from_user.id, text='Сейчас давайте ответим на '
+                                                           'несколько вопросов для заполнения эпитафии')
+    await bot.send_message(chat_id=call.from_user.id, text='Когда человек родился?')
+    async with state.proxy() as data:
+        data['bday'] = call.data
+    state.finish()
+
+
+
+
+# ====================================================================
 
 
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)  #, on_startup=database_start)
+    executor.start_polling(dp, skip_updates=True)  # , on_startup=database_start)
+
+#todo подумать где хранится дата и как делать цепочку диалога через состояния
+
+#todo также подумать, нужно ли делать состояние в состоянии и почему inline кнопка бесконечно грузится
+
+#todo добавить везде кнопку cancel
